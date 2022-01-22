@@ -29,7 +29,7 @@
 // -- ext
 use std::io;
 use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 #[cfg(feature = "find")]
 use wildmatch::WildMatch;
 // -- modules
@@ -56,13 +56,6 @@ pub trait RemoteFs {
 
     /// Gets whether the client is connected to remote
     fn is_connected(&self) -> bool;
-
-    /// Get working directory
-    fn pwd(&self) -> RemoteResult<PathBuf>;
-
-    /// Change working directory.
-    /// Returns the realpath of new directory
-    fn change_dir(&self, dir: &Path) -> RemoteResult<PathBuf>;
 
     /// List directory entries at specified `path`
     fn list_dir(&self, path: &Path) -> RemoteResult<Vec<File>>;
@@ -96,9 +89,8 @@ pub trait RemoteFs {
     /// Implement this method when there is a faster way to achieve this
     fn remove_dir_all(&self, path: &Path) -> RemoteResult<()> {
         if self.is_connected() {
-            let path = crate::utils::path::absolutize(&self.pwd()?, path);
             debug!("Removing {}...", path.display());
-            let entry = self.stat(path.as_path())?;
+            let entry = self.stat(path)?;
             if entry.is_dir() {
                 // list dir
                 debug!(
@@ -268,15 +260,9 @@ pub trait RemoteFs {
     /// Find files from current directory (in all subdirectories) whose name matches the provided search
     /// Search supports wildcards ('?', '*')
     #[cfg(feature = "find")]
-    fn find(&self, search: &str) -> RemoteResult<Vec<File>> {
+    fn find(&self, path: &Path, search: &str) -> RemoteResult<Vec<File>> {
         match self.is_connected() {
-            true => {
-                // Starting from current directory, iter dir
-                match self.pwd() {
-                    Ok(p) => self.iter_search(p.as_path(), &WildMatch::new(search)),
-                    Err(err) => Err(err),
-                }
-            }
+            true => self.iter_search(path, &WildMatch::new(search)),
             false => Err(RemoteError::new(RemoteErrorType::NotConnected)),
         }
     }

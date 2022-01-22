@@ -47,16 +47,6 @@ impl RemoteFs for MockRemoteFs {
     }
 
     #[allow(unused)]
-    fn pwd(&self) -> crate::RemoteResult<std::path::PathBuf> {
-        Ok(std::path::PathBuf::from("/"))
-    }
-
-    #[allow(unused)]
-    fn change_dir(&self, dir: &std::path::Path) -> crate::RemoteResult<std::path::PathBuf> {
-        Ok(dir.to_path_buf())
-    }
-
-    #[allow(unused)]
     fn list_dir(&self, path: &std::path::Path) -> crate::RemoteResult<Vec<crate::File>> {
         Ok(vec![])
     }
